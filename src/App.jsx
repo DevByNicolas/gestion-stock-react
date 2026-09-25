@@ -1,35 +1,82 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
 import ProductList from './components/ProductList';
 
 function App() {
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Clavier Mécanique', category: 'Périphériques', quantity: 15, price: 89.99 },
-    { id: 2, name: 'Écran 27" 4K', category: 'Affichage', quantity: 8, price: 349.99 },
-  ]);
-
+  const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
   const [editId, setEditId] = useState(null);
 
-  const handleSubmit = (e) => {
+  // 1. Charger les produits au démarrage depuis Supabase
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error('Erreur lors de la récupération :', error);
+    } else {
+      setProducts(data);
+    }
+  };
+
+  // 2. Ajouter ou Modifier un produit dans Supabase
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price) return;
 
+    const productData = {
+      name: form.name,
+      category: form.category,
+      quantity: Number(form.quantity),
+      price: Number(form.price),
+    };
+
     if (editId) {
-      setProducts(products.map(p => p.id === editId ? { ...form, id: editId } : p));
+      // Modification dans la base de données
+      const { error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', editId);
+
+      if (error) console.error('Erreur de modification :', error);
       setEditId(null);
     } else {
-      setProducts([...products, { ...form, id: Date.now() }]);
+      // Insertion dans la base de données
+      const { error } = await supabase
+        .from('products')
+        .insert([productData]);
+
+      if (error) console.error("Erreur d'ajout :", error);
     }
+
     setForm({ name: '', category: '', quantity: '', price: '' });
+    fetchProducts(); // Recharger la liste mise à jour
   };
 
+  // 3. Préparer l'édition d'un produit
   const handleEdit = (product) => {
     setForm(product);
     setEditId(product.id);
   };
 
-  const handleDelete = (id) => {
-    setProducts(products.filter(p => p.id !== id));
+  // 4. Supprimer un produit dans Supabase
+  const handleDelete = async (id) => {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erreur de suppression :', error);
+    } else {
+      fetchProducts(); // Recharger la liste
+    }
   };
 
   return (
