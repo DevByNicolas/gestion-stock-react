@@ -1,0 +1,78 @@
+import React from 'react';
+import '../App.css';
+
+function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit, handleDelete }) {
+  return (
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Gestion de Stock</h1>
+      </div>
+
+      <div className="card">
+        <form onSubmit={handleSubmit} className="product-form">
+          <input
+            className="form-input"
+            type="text"
+            placeholder="Nom du produit"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+          <input
+            className="form-input"
+            type="text"
+            placeholder="Catégorie"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          />
+          <input
+            className="form-input"
+            type="number"
+            placeholder="Qté"
+            value={form.quantity}
+            onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
+          />
+          <input
+            className="form-input"
+            type="number"
+            placeholder="Prix (€)"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+          />
+          <button type="submit" className="btn btn-primary">
+            {editId ? 'Enregistrer' : 'Ajouter'}
+          </button>
+        </form>
+      </div>
+
+      <div className="table-container">
+        <table className="product-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Catégorie</th>
+              <th>Stock</th>
+              <th>Prix unitaire</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((p) => (
+              <tr key={p.id}>
+                <td style={{ fontWeight: 500 }}>{p.name}</td>
+                <td><span className="badge">{p.category}</span></td>
+                <td>{p.quantity}</td>
+                <td>{p.price.toFixed(2)} €</td>
+                <td style={{ textAlign: 'right' }}>
+                  <button onClick={() => handleEdit(p)} className="btn btn-outline">Modifier</button>
+                  <button onClick={() => handleDelete(p.id)} className="btn btn-danger">Supprimer</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default ProductList;
