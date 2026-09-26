@@ -10,10 +10,10 @@ export default function Auth() {
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Masquage technique de l'email pour Supabase Auth
+  // Masquage technique de l'email pour Supabase Auth avec un domaine valide
   const formatInternalEmail = (name) => {
-    const cleanUsername = name.trim().toLowerCase().replace(/\s+/g, '_');
-    return `${cleanUsername}@app.local`;
+    const cleanUsername = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    return `${cleanUsername}.user@gmail.com`;
   };
 
   const handleAuth = async (e) => {
@@ -69,7 +69,6 @@ export default function Auth() {
     setLoading(false);
   };
 
-  // Style universel pour étirer les inputs à 100%
   const inputStyle = {
     width: '100%',
     boxSizing: 'border-box',
