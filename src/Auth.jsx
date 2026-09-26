@@ -132,18 +132,32 @@ export default function Auth() {
         {errorMsg && <p style={{ marginTop: '14px', color: '#f87171', fontSize: '0.875rem', textAlign: 'center' }}>{errorMsg}</p>}
 
         <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.875rem', color: '#94a3b8' }}>
-          <p>
+          <p style={{ margin: 0 }}>
             {isSignUp ? 'Déjà un compte ?' : "Pas encore de compte ?"} {' '}
-            <span
+            <button
+              type="button"
               onClick={() => { 
                 setIsSignUp(!isSignUp); 
                 setErrorMsg(''); 
                 setMessage(''); 
               }}
-              style={{ color: '#38bdf8', cursor: 'pointer', textDecoration: 'underline', fontWeight: '500' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: '#38bdf8',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontWeight: '500',
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                touchAction: 'manipulation'
+              }}
             >
               {isSignUp ? 'Se connecter' : "S'inscrire"}
-            </span>
+            </button>
           </p>
         </div>
       </div>
