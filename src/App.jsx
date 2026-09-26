@@ -1,16 +1,33 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import ProductList from './components/ProductList';
+import Auth from './Auth';
 
 function App() {
+  const [session, setSession] = useState(null);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
   const [editId, setEditId] = useState(null);
 
-  // 1. Charger les produits au démarrage depuis Supabase
+  // Gérer la session d'authentification
   useEffect(() => {
-    fetchProducts();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // 1. Charger les produits uniquement si un utilisateur est connecté
+  useEffect(() => {
+    if (session) {
+      fetchProducts();
+    }
+  }, [session]);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -79,16 +96,29 @@ function App() {
     }
   };
 
+  // Si l'utilisateur n'est pas connecté, afficher le composant Auth
+  if (!session) {
+    return <Auth />;
+  }
+
   return (
-    <ProductList
-      products={products}
-      form={form}
-      setForm={setForm}
-      editId={editId}
-      handleSubmit={handleSubmit}
-      handleEdit={handleEdit}
-      handleDelete={handleDelete}
-    />
+    <div style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 20px', maxWidth: '850px', margin: '0 auto' }}>
+        <button onClick={() => supabase.auth.signOut()} className="btn btn-outline">
+          Déconnexion
+        </button>
+      </div>
+
+      <ProductList
+        products={products}
+        form={form}
+        setForm={setForm}
+        editId={editId}
+        handleSubmit={handleSubmit}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+      />
+    </div>
   );
 }
 
