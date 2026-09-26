@@ -10,7 +10,7 @@ export default function Auth() {
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Masquage technique de l'email pour le moteur Supabase
+  // Masquage technique de l'email pour Supabase Auth
   const formatInternalEmail = (name) => {
     const cleanUsername = name.trim().toLowerCase().replace(/\s+/g, '_');
     return `${cleanUsername}@app.local`;
@@ -69,20 +69,33 @@ export default function Auth() {
     setLoading(false);
   };
 
+  // Style universel pour étirer les inputs à 100%
+  const inputStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '10px 14px',
+    borderRadius: '6px',
+    border: '1px solid #475569',
+    backgroundColor: '#1e293b',
+    color: '#fff',
+    fontSize: '0.95rem',
+    outline: 'none'
+  };
+
   return (
-    <div className="dashboard-container" style={{ maxWidth: '400px', marginTop: '60px' }}>
-      <div className="card">
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '16px' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '400px', boxSizing: 'border-box' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#f8fafc' }}>
           {isSignUp ? 'Créer un compte' : 'Connexion'}
         </h2>
 
-        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div>
+        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+          <div style={{ width: '100%' }}>
             <label style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '6px', display: 'block' }}>
               Nom d'utilisateur
             </label>
             <input
-              className="form-input"
+              style={inputStyle}
               type="text"
               placeholder="Votre nom d'utilisateur"
               value={username}
@@ -91,12 +104,12 @@ export default function Auth() {
             />
           </div>
 
-          <div>
+          <div style={{ width: '100%' }}>
             <label style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '6px', display: 'block' }}>
               Mot de passe
             </label>
             <input
-              className="form-input"
+              style={inputStyle}
               type="password"
               placeholder="••••••••"
               value={password}
@@ -105,7 +118,12 @@ export default function Auth() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '10px' }}>
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={loading} 
+            style={{ width: '100%', marginTop: '8px', padding: '12px' }}
+          >
             {loading ? 'Chargement...' : isSignUp ? "S'inscrire" : 'Se connecter'}
           </button>
         </form>
