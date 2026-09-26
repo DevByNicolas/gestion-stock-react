@@ -176,3 +176,90 @@ body::before {
   color: #38bdf8;
   border: 1px solid rgba(56, 189, 248, 0.3);
 }
+
+/* ==========================================================================
+   AJOUT : Styles Responsive pour la Vue Mobile (Cartes)
+   ========================================================================== */
+
+/* Par défaut (Mobile) : Affichage des cartes, masquage du tableau */
+.mobile-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.desktop-table {
+  display: none;
+}
+
+.mobile-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobile-card-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+.mobile-card-body {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 0;
+}
+
+.mobile-card-body .label {
+  color: #94a3b8;
+}
+
+.mobile-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.mobile-card-actions .btn {
+  flex: 1;
+  margin-right: 0;
+}
+
+/* Adaptation du formulaire sur petit écran */
+@media (max-width: 767px) {
+  body {
+    padding: 20px 12px;
+  }
+
+  .product-form {
+    flex-direction: column;
+  }
+}
+
+/* Écrans Ordinateurs et Tablette (768px et plus) : Affichage du tableau */
+@media (min-width: 768px) {
+  .mobile-cards-container {
+    display: none;
+  }
+
+  .desktop-table {
+    display: block;
+  }
+}

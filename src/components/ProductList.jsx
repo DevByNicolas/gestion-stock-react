@@ -44,7 +44,34 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
         </form>
       </div>
 
-      <div className="table-container">
+      {/* VUE MOBILE : Cartes (affichées uniquement sur petit écran) */}
+      <div className="mobile-cards-container">
+        {products.map((p) => (
+          <div key={p.id} className="mobile-card">
+            <div className="mobile-card-header">
+              <span className="mobile-card-title">{p.name}</span>
+              <span className="badge">{p.category}</span>
+            </div>
+            
+            <div className="mobile-card-body">
+              <div>
+                <span className="label">Stock :</span> <strong>{p.quantity}</strong>
+              </div>
+              <div>
+                <span className="label">Prix :</span> <strong>{p.price.toFixed(2)} €</strong>
+              </div>
+            </div>
+
+            <div className="mobile-card-actions">
+              <button onClick={() => handleEdit(p)} className="btn btn-outline">Modifier</button>
+              <button onClick={() => handleDelete(p.id)} className="btn btn-danger">Supprimer</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* VUE DESKTOP : Tableau (masqué sur mobile) */}
+      <div className="table-container desktop-table">
         <table className="product-table">
           <thead>
             <tr>
