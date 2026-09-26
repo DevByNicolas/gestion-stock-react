@@ -8,6 +8,18 @@ function App() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
   const [editId, setEditId] = useState(null);
+  
+  // Devise sélectionnée (Euro par défaut, sauvegardée dans localStorage)
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('app_currency') || '€';
+  });
+
+  // Sauvegarder le changement de devise
+  const handleCurrencyChange = (e) => {
+    const newCurrency = e.target.value;
+    setCurrency(newCurrency);
+    localStorage.setItem('app_currency', newCurrency);
+  };
 
   // Gérer la session d'authentification
   useEffect(() => {
@@ -103,7 +115,40 @@ function App() {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 20px', maxWidth: '850px', margin: '0 auto' }}>
+      {/* Barre d'en-tête avec Choix de devise + Déconnexion */}
+      <div 
+        style={{ 
+          display: 'flex', 
+          justify: 'space-between', 
+          alignItems: 'center', 
+          padding: '10px 20px', 
+          maxWidth: '850px', 
+          margin: '0 auto',
+          gap: '10px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Devise :</label>
+          <select
+            value={currency}
+            onChange={handleCurrencyChange}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #475569',
+              backgroundColor: '#1e293b',
+              color: '#fff',
+              fontSize: '0.875rem',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="€">EUR (€)</option>
+            <option value="$">USD ($)</option>
+            <option value="FCFA">FCFA</option>
+          </select>
+        </div>
+
         <button onClick={() => supabase.auth.signOut()} className="btn btn-outline">
           Déconnexion
         </button>
@@ -117,6 +162,7 @@ function App() {
         handleSubmit={handleSubmit}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
+        currency={currency}
       />
     </div>
   );

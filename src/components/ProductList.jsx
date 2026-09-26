@@ -1,7 +1,7 @@
 import React from 'react';
 import '../App.css';
 
-function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit, handleDelete }) {
+function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit, handleDelete, currency = '€' }) {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -34,7 +34,7 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
           <input
             className="form-input"
             type="number"
-            placeholder="Prix (€)"
+            placeholder={`Prix (${currency})`}
             value={form.price}
             onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
           />
@@ -58,7 +58,7 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
                 <span className="label">Stock :</span> <strong>{p.quantity}</strong>
               </div>
               <div>
-                <span className="label">Prix :</span> <strong>{p.price.toFixed(2)} €</strong>
+                <span className="label">Prix :</span> <strong>{Number(p.price).toFixed(2)} {currency}</strong>
               </div>
             </div>
 
@@ -88,7 +88,7 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
                 <td style={{ fontWeight: 500 }}>{p.name}</td>
                 <td><span className="badge">{p.category}</span></td>
                 <td>{p.quantity}</td>
-                <td>{p.price.toFixed(2)} €</td>
+                <td>{Number(p.price).toFixed(2)} {currency}</td>
                 <td style={{ textAlign: 'right' }}>
                   <button onClick={() => handleEdit(p)} className="btn btn-outline">Modifier</button>
                   <button onClick={() => handleDelete(p.id)} className="btn btn-danger">Supprimer</button>
