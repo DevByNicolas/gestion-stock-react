@@ -10,10 +10,11 @@ export default function Auth() {
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Masquage technique de l'email pour Supabase Auth avec un domaine valide
+  // Génère un email interne unique et prévisible basé exactement sur le pseudo
   const formatInternalEmail = (name) => {
-    const cleanUsername = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    return `${cleanUsername}.user@gmail.com`;
+    // Encode la chaîne pour éviter la perte de caractères spéciaux et éviter les collisions de pseudos
+    const cleanUsername = name.trim().toLowerCase().replace(/\s+/g, '_');
+    return `${cleanUsername}@app.internal.com`;
   };
 
   const handleAuth = async (e) => {
@@ -23,10 +24,17 @@ export default function Auth() {
     setErrorMsg('');
 
     const cleanUsername = username.trim();
+
+    if (!cleanUsername || !password) {
+      setErrorMsg("Veuillez remplir tous les champs.");
+      setLoading(false);
+      return;
+    }
+
     const internalEmail = formatInternalEmail(cleanUsername);
 
     if (isSignUp) {
-      // Vérification de l'unicité du nom d'utilisateur
+      // 1. Vérification stricte dans la table profiles
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('username')
@@ -34,13 +42,13 @@ export default function Auth() {
         .maybeSingle();
 
       if (existingUser) {
-        setErrorMsg("Ce nom d'utilisateur est déjà pris. Veuillez en choisir un autre.");
+        setErrorMsg("Ce nom d'utilisateur est déjà pris.");
         setLoading(false);
         return;
       }
 
-      // Inscription
-      const { error } = await supabase.auth.signUp({
+      // 2. Tente l'inscription
+      const { data, error } = await supabase.auth.signUp({
         email: internalEmail,
         password: password,
         options: {
@@ -50,12 +58,17 @@ export default function Auth() {
 
       if (error) {
         setErrorMsg("Erreur lors de l'inscription : " + error.message);
+      } else if (data?.user && data.user.identities && data.user.identities.length === 0) {
+        // Sécurité Supabase : Si l'email/pseudo existe déjà, Supabase renvoie identities = []
+        // On force la déconnexion pour éviter toute connexion indésirable
+        await supabase.auth.signOut();
+        setErrorMsg("Ce nom d'utilisateur est déjà utilisé.");
       } else {
         setMessage('Compte créé avec succès ! Connexion en cours...');
       }
 
     } else {
-      // Connexion via nom d'utilisateur + mot de passe
+      // Connexion
       const { error } = await supabase.auth.signInWithPassword({
         email: internalEmail,
         password: password,
@@ -112,7 +125,7 @@ export default function Auth() {
               type="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => setUsername ? setPassword(e.target.value) : null}
               required
             />
           </div>
