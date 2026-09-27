@@ -10,7 +10,7 @@ function App() {
   const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
   const [editId, setEditId] = useState(null);
   
-  // Devise sélectionnée (Euro par défaut, sauvegardée dans localStorage)
+  // Devise sélectionnée
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem('app_currency') || '€';
   });
@@ -42,59 +42,67 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Récupérer le pseudo du profil connecté
+  // Récupérer le pseudo du profil connecté en toute sécurité
   const getUserProfile = async (user) => {
-    // 1. Essayer depuis les métadonnées auth
-    if (user.user_metadata?.username) {
-      setUserName(user.user_metadata.username);
-      return;
-    }
+    try {
+      if (user.user_metadata?.username) {
+        setUserName(user.user_metadata.username);
+        return;
+      }
 
-    // 2. Sinon, chercher dans la table profiles
-    const { data } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', user.id)
-      .maybeSingle();
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (data?.username) {
-      setUserName(data.username);
-    } else {
+      if (data?.username) {
+        setUserName(data.username);
+      } else {
+        setUserName('Utilisateur');
+      }
+    } catch (err) {
+      console.error('Erreur profil :', err);
       setUserName('Utilisateur');
     }
   };
 
-  // Charger uniquement les produits appartenant à l'utilisateur connecté
+  // Charger les produits de l'utilisateur connecté
   useEffect(() => {
-    if (session) {
+    if (session?.user) {
       fetchProducts();
     }
   }, [session]);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('id', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('id', { ascending: true });
 
-    if (error) {
-      console.error('Erreur lors de la récupération :', error);
-    } else {
-      setProducts(data || []);
+      if (error) {
+        console.error('Erreur lors de la récupération des produits :', error);
+        setProducts([]);
+      } else {
+        setProducts(data || []);
+      }
+    } catch (err) {
+      console.error('Erreur de chargement :', err);
+      setProducts([]);
     }
   };
 
   // Ajouter ou Modifier un produit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.price) return;
+    if (!form.name || !form.price || !session?.user) return;
 
     const productData = {
       name: form.name,
       category: form.category,
-      quantity: Number(form.quantity),
-      price: Number(form.price),
+      quantity: Number(form.quantity) || 0,
+      price: Number(form.price) || 0,
       user_id: session.user.id
     };
 
@@ -102,8 +110,7 @@ function App() {
       const { error } = await supabase
         .from('products')
         .update(productData)
-        .eq('id', editId)
-        .eq('user_id', session.user.id);
+        .eq('id', editId);
 
       if (error) console.error('Erreur de modification :', error);
       setEditId(null);
@@ -128,8 +135,7 @@ function App() {
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('id', id)
-      .eq('user_id', session.user.id);
+      .eq('id', id);
 
     if (error) {
       console.error('Erreur de suppression :', error);
@@ -143,7 +149,7 @@ function App() {
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
       {/* En-tête avec Nom d'utilisateur + Devise + Déconnexion */}
       <div 
         style={{ 
@@ -158,7 +164,7 @@ function App() {
         }}
       >
         <div style={{ color: '#f8fafc', fontWeight: '600', fontSize: '1rem' }}>
-          👋 Bonjour, <span style={{ color: '#38bdf8' }}>{userName}</span>
+          👋 Bonjour, <span style={{ color: '#38bdf8' }}>{userName || 'Utilisateur'}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
