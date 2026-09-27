@@ -5,69 +5,81 @@ import Auth from './Auth';
 
 function App() {
   const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
   const [editId, setEditId] = useState(null);
   
-  // Devise sélectionnée (Euro par défaut, sauvegardée dans localStorage)
+  // Devise sélectionnée
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem('app_currency') || '€';
   });
 
-  // Sauvegarder le changement de devise
   const handleCurrencyChange = (e) => {
     const newCurrency = e.target.value;
     setCurrency(newCurrency);
     localStorage.setItem('app_currency', newCurrency);
   };
 
-  // Gérer la session d'authentification
+  // Gérer la session d'authentification sans bloquer l'interface
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // 1. Charger les produits uniquement si un utilisateur est connecté
+  // Charger les produits uniquement si un utilisateur est connecté
   useEffect(() => {
-    if (session) {
+    if (session?.user) {
       fetchProducts();
+    } else {
+      setProducts([]);
     }
   }, [session]);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('id', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('id', { ascending: true });
 
-    if (error) {
-      console.error('Erreur lors de la récupération :', error);
-    } else {
-      setProducts(data);
+      if (error) {
+        console.error('Erreur lors de la récupération :', error);
+        setProducts([]);
+      } else {
+        setProducts(data || []);
+      }
+    } catch (err) {
+      console.error('Erreur réseau / Supabase :', err);
+      setProducts([]);
     }
   };
 
-  // 2. Ajouter ou Modifier un produit dans Supabase
+  // Ajouter ou Modifier un produit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.price) return;
+    if (!form.name || !form.price || !session?.user) return;
 
     const productData = {
       name: form.name,
       category: form.category,
-      quantity: Number(form.quantity),
-      price: Number(form.price),
+      quantity: Number(form.quantity) || 0,
+      price: Number(form.price) || 0,
+      user_id: session.user.id
     };
 
     if (editId) {
-      // Modification dans la base de données
       const { error } = await supabase
         .from('products')
         .update(productData)
@@ -76,7 +88,6 @@ function App() {
       if (error) console.error('Erreur de modification :', error);
       setEditId(null);
     } else {
-      // Insertion dans la base de données
       const { error } = await supabase
         .from('products')
         .insert([productData]);
@@ -85,16 +96,14 @@ function App() {
     }
 
     setForm({ name: '', category: '', quantity: '', price: '' });
-    fetchProducts(); // Recharger la liste mise à jour
+    fetchProducts();
   };
 
-  // 3. Préparer l'édition d'un produit
   const handleEdit = (product) => {
     setForm(product);
     setEditId(product.id);
   };
 
-  // 4. Supprimer un produit dans Supabase
   const handleDelete = async (id) => {
     const { error } = await supabase
       .from('products')
@@ -104,18 +113,30 @@ function App() {
     if (error) {
       console.error('Erreur de suppression :', error);
     } else {
-      fetchProducts(); // Recharger la liste
+      fetchProducts();
     }
   };
 
-  // Si l'utilisateur n'est pas connecté, afficher le composant Auth
+  // Écran d'attente bref pendant la lecture du token local
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', color: '#f8fafc' }}>
+        Chargement...
+      </div>
+    );
+  }
+
+  // Si l'utilisateur n'est pas connecté
   if (!session) {
     return <Auth />;
   }
 
+  // Récupération de l'affichage du nom (metadata ou fallback)
+  const displayUsername = session.user.user_metadata?.username || 'Utilisateur';
+
   return (
     <div style={{ position: 'relative' }}>
-      {/* Barre d'en-tête avec Choix de devise + Déconnexion */}
+      {/* Barre d'en-tête */}
       <div 
         style={{ 
           display: 'flex', 
@@ -124,34 +145,41 @@ function App() {
           padding: '10px 20px', 
           maxWidth: '850px', 
           margin: '0 auto',
-          gap: '10px'
+          gap: '10px',
+          flexWrap: 'wrap'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Devise :</label>
-          <select
-            value={currency}
-            onChange={handleCurrencyChange}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid #475569',
-              backgroundColor: '#1e293b',
-              color: '#fff',
-              fontSize: '0.875rem',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="€">EUR (€)</option>
-            <option value="$">USD ($)</option>
-            <option value="FCFA">FCFA</option>
-          </select>
+        <div style={{ color: '#f8fafc', fontWeight: '600' }}>
+          👋 Bonjour, <span style={{ color: '#38bdf8' }}>{displayUsername}</span>
         </div>
 
-        <button onClick={() => supabase.auth.signOut()} className="btn btn-outline">
-          Déconnexion
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Devise :</label>
+            <select
+              value={currency}
+              onChange={handleCurrencyChange}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #475569',
+                backgroundColor: '#1e293b',
+                color: '#fff',
+                fontSize: '0.875rem',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="€">EUR (€)</option>
+              <option value="$">USD ($)</option>
+              <option value="FCFA">FCFA</option>
+            </select>
+          </div>
+
+          <button onClick={() => supabase.auth.signOut()} className="btn btn-outline">
+            Déconnexion
+          </button>
+        </div>
       </div>
 
       <ProductList
