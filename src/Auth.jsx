@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import ProductList from './components/ProductList';
 import Auth from './Auth';
@@ -7,6 +7,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [userName, setUserName] = useState('');
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
   const [editId, setEditId] = useState(null);
   
@@ -21,76 +22,92 @@ function App() {
     localStorage.setItem('app_currency', newCurrency);
   };
 
-  // Récupérer le pseudo
-  const getUserProfile = useCallback(async (user) => {
-    if (!user) return;
-    try {
-      if (user.user_metadata?.username) {
-        setUserName(user.user_metadata.username);
-        return;
-      }
-
-      const { data } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (data?.username) {
-        setUserName(data.username);
-      } else {
-        setUserName('Utilisateur');
-      }
-    } catch (err) {
-      setUserName('Utilisateur');
-    }
-  }, []);
-
-  // Charger les produits
-  const fetchProducts = useCallback(async (userId) => {
-    if (!userId) return;
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('id', { ascending: true });
-
-      if (error) {
-        console.error('Erreur récupération :', error);
-        setProducts([]);
-      } else {
-        setProducts(data || []);
-      }
-    } catch (err) {
-      setProducts([]);
-    }
-  }, []);
-
-  // Gérer la session d'authentification (exécuté UNE SEULE FOIS au montage)
+  // 1. Écouteur de session
   useEffect(() => {
+    // Vérification initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) {
-        getUserProfile(session.user);
-        fetchProducts(session.user.id);
-      }
+      setLoading(false);
+    }).catch((err) => {
+      console.error("Erreur session:", err);
+      setLoading(false);
     });
 
+    // Écoute des changements d'état d'auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) {
-        getUserProfile(session.user);
-        fetchProducts(session.user.id);
-      } else {
-        setUserName('');
-        setProducts([]);
-      }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [getUserProfile, fetchProducts]);
+  }, []);
 
-  // Ajouter ou Modifier un produit
+  // 2. Charger profil et produits dès que la session est active
+  useEffect(() => {
+    if (!session?.user) {
+      setProducts([]);
+      setUserName('');
+      return;
+    }
+
+    // Récupération du pseudo
+    const fetchUser = async () => {
+      try {
+        if (session.user.user_metadata?.username) {
+          setUserName(session.user.user_metadata.username);
+          return;
+        }
+
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (data?.username) {
+          setUserName(data.username);
+        } else {
+          setUserName('Utilisateur');
+        }
+      } catch (e) {
+        setUserName('Utilisateur');
+      }
+    };
+
+    // Récupération des produits
+    const fetchProductsData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error("Erreur fetch products:", error);
+          setProducts([]);
+        } else {
+          setProducts(data || []);
+        }
+      } catch (e) {
+        console.error("Erreur produits:", e);
+        setProducts([]);
+      }
+    };
+
+    fetchUser();
+    fetchProductsData();
+  }, [session]);
+
+  const refreshProducts = async () => {
+    if (!session?.user) return;
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .order('id', { ascending: true });
+    setProducts(data || []);
+  };
+
+  // 3. Gestion du formulaire (Ajout / Modif)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price || !session?.user) return;
@@ -104,23 +121,19 @@ function App() {
     };
 
     if (editId) {
-      const { error } = await supabase
+      await supabase
         .from('products')
         .update(productData)
         .eq('id', editId);
-
-      if (error) console.error('Erreur modification :', error);
       setEditId(null);
     } else {
-      const { error } = await supabase
+      await supabase
         .from('products')
         .insert([productData]);
-
-      if (error) console.error("Erreur ajout :", error);
     }
 
     setForm({ name: '', category: '', quantity: '', price: '' });
-    fetchProducts(session.user.id);
+    refreshProducts();
   };
 
   const handleEdit = (product) => {
@@ -130,24 +143,30 @@ function App() {
 
   const handleDelete = async (id) => {
     if (!session?.user) return;
-    const { error } = await supabase
+    await supabase
       .from('products')
       .delete()
       .eq('id', id);
-
-    if (error) {
-      console.error('Erreur suppression :', error);
-    } else {
-      fetchProducts(session.user.id);
-    }
+    refreshProducts();
   };
 
+  // Affichage pendant la vérification initiale
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', color: '#fff' }}>
+        Chargement de l'application...
+      </div>
+    );
+  }
+
+  // Si non connecté
   if (!session) {
     return <Auth />;
   }
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
+      {/* En-tête */}
       <div 
         style={{ 
           display: 'flex', 
