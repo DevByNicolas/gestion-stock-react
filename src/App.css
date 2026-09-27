@@ -6,7 +6,6 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* Arrière-plan sombre et sobre */
   background: radial-gradient(circle at 50% 30%, #334155 0%, #1e293b 60%, #0f172a 100%);
   color: #f8fafc;
   min-height: 100vh;
@@ -15,7 +14,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Vagues discrètes en filigrane */
 body::before {
   content: "";
   position: fixed;
@@ -45,11 +43,10 @@ body::before {
 .dashboard-header h1 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: #ffffff;
   letter-spacing: -0.02em;
 }
 
-/* Cartes sobres avec verre semi-opaque */
 .card {
   background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(12px);
@@ -74,7 +71,7 @@ body::before {
   font-size: 0.875rem;
   outline: none;
   background-color: rgba(15, 23, 42, 0.6);
-  color: #f8fafc;
+  color: #ffffff;
   flex: 1;
   min-width: 0;
   transition: border-color 0.15s ease;
@@ -85,7 +82,7 @@ body::before {
 }
 
 .form-input:focus {
-  border-color: #6366f1;
+  border-color: #3b82f6;
   background-color: rgba(15, 23, 42, 0.8);
 }
 
@@ -100,37 +97,27 @@ body::before {
   transition: all 0.15s ease;
 }
 
-/* Bouton principal : Indigo élégant au lieu du cyan IA */
+/* BOUTON PRINCIPAL (Ajouter / Se Connecter) : Bleu classique et professionnel */
 .btn-primary {
-  background-color: #6366f1;
+  background-color: #2563eb;
   color: #ffffff;
 }
 
 .btn-primary:hover {
-  background-color: #4f46e5;
+  background-color: #1d4ed8;
 }
 
-.btn-outline {
+/* BOUTON SECONDAIRE ET SUPPRESSION (Style sobre unifié) */
+.btn-outline, .btn-danger {
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
+  color: #f8fafc;
   margin-right: 6px;
 }
 
-.btn-outline:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+.btn-outline:hover, .btn-danger:hover {
+  background-color: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-}
-
-/* Bouton suppression doux */
-.btn-danger {
-  background-color: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
-}
-
-.btn-danger:hover {
-  background-color: rgba(239, 68, 68, 0.18);
 }
 
 .table-container {
@@ -161,14 +148,9 @@ body::before {
 .product-table td {
   padding: 16px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #f1f5f9;
+  color: #ffffff;
 }
 
-.product-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Badge neutre et pro */
 .badge {
   display: inline-block;
   padding: 3px 9px;
@@ -179,10 +161,6 @@ body::before {
   color: #cbd5e1;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-
-/* ==========================================================================
-   Styles Responsive Mobile
-   ========================================================================== */
 
 .mobile-cards-container {
   display: flex;
@@ -227,10 +205,6 @@ body::before {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding: 10px 0;
-}
-
-.mobile-card-body .label {
-  color: #94a3b8;
 }
 
 .mobile-card-actions {
