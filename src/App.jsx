@@ -66,7 +66,7 @@ function App() {
     }
   };
 
-  // Ajouter ou Modifier un produit
+  // Ajouter ou Modifier un produit avec mise à jour immédiate de l'affichage
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price || !session?.user) return;
@@ -80,23 +80,37 @@ function App() {
     };
 
     if (editId) {
+      // 1. Modification dans Supabase
       const { error } = await supabase
         .from('products')
         .update(productData)
         .eq('id', editId);
 
-      if (error) console.error('Erreur de modification :', error);
+      if (error) {
+        console.error('Erreur de modification :', error);
+      } else {
+        // Mise à jour immédiate dans le tableau React
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editId ? { ...p, ...productData } : p))
+        );
+      }
       setEditId(null);
     } else {
-      const { error } = await supabase
+      // 2. Ajout dans Supabase
+      const { data, error } = await supabase
         .from('products')
-        .insert([productData]);
+        .insert([productData])
+        .select();
 
-      if (error) console.error("Erreur d'ajout :", error);
+      if (error) {
+        console.error("Erreur d'ajout :", error);
+      } else if (data && data[0]) {
+        // Ajout immédiat dans le tableau React
+        setProducts((prev) => [...prev, data[0]]);
+      }
     }
 
     setForm({ name: '', category: '', quantity: '', price: '' });
-    fetchProducts();
   };
 
   const handleEdit = (product) => {
@@ -104,7 +118,11 @@ function App() {
     setEditId(product.id);
   };
 
+  // Supprimer un produit avec retrait immédiat de l'affichage
   const handleDelete = async (id) => {
+    // Retrait immédiat de l'écran pour réactivité instantanée sur mobile
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+
     const { error } = await supabase
       .from('products')
       .delete()
@@ -112,7 +130,7 @@ function App() {
 
     if (error) {
       console.error('Erreur de suppression :', error);
-    } else {
+      // En cas d'erreur, on recharge la vraie liste
       fetchProducts();
     }
   };
