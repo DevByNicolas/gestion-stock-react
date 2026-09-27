@@ -97,7 +97,7 @@ body::before {
   transition: all 0.15s ease;
 }
 
-/* BOUTON PRINCIPAL (Ajouter / Se Connecter) : Bleu classique et professionnel */
+/* BOUTON PRINCIPAL (Ajouter / Se connecter) : Bleu professionnel */
 .btn-primary {
   background-color: #2563eb;
   color: #ffffff;
@@ -107,7 +107,7 @@ body::before {
   background-color: #1d4ed8;
 }
 
-/* BOUTON SECONDAIRE ET SUPPRESSION (Style sobre unifié) */
+/* BOUTON SECONDAIRE ET SUPPRIMER : Même style sobre */
 .btn-outline, .btn-danger {
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);

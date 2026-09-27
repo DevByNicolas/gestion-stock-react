@@ -40,23 +40,23 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
         <h1>Gestion de Stock</h1>
       </div>
 
-      {/* BLOC 1 : Statistiques / Résumé */}
+      {/* BLOC 1 : Statistiques / Résumé (Textes et valeurs en Blanc Pur) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
         <div className="card" style={{ textAlign: 'center', padding: '16px' }}>
           <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Valeur du Stock</span>
-          <h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '1.5rem' }}>
+          <h2 style={{ color: '#ffffff', margin: '8px 0 0 0', fontSize: '1.5rem', fontWeight: '600' }}>
             {totalValue.toFixed(2)} {currency}
           </h2>
         </div>
         <div className="card" style={{ textAlign: 'center', padding: '16px' }}>
           <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Articles en Stock</span>
-          <h2 style={{ color: '#4ade80', margin: '8px 0 0 0', fontSize: '1.5rem' }}>
+          <h2 style={{ color: '#ffffff', margin: '8px 0 0 0', fontSize: '1.5rem', fontWeight: '600' }}>
             {totalItems}
           </h2>
         </div>
         <div className="card" style={{ textAlign: 'center', padding: '16px' }}>
           <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Alertes Stock Faible (&lt; 5)</span>
-          <h2 style={{ color: lowStockCount > 0 ? '#f87171' : '#f8fafc', margin: '8px 0 0 0', fontSize: '1.5rem' }}>
+          <h2 style={{ color: lowStockCount > 0 ? '#f59e0b' : '#ffffff', margin: '8px 0 0 0', fontSize: '1.5rem', fontWeight: '600' }}>
             {lowStockCount}
           </h2>
         </div>
@@ -133,19 +133,19 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
             <div key={p.id} className="mobile-card">
               <div className="mobile-card-header">
                 <span className="mobile-card-title">{p.name}</span>
-                <span className="badge">{p.category}</span>
+                {p.category && <span className="badge">{p.category}</span>}
               </div>
               
               <div className="mobile-card-body">
                 <div>
                   <span className="label">Stock :</span>{' '}
-                  <strong style={{ color: Number(p.quantity) < 5 ? '#f87171' : 'inherit' }}>
+                  <strong style={{ color: '#ffffff' }}>
                     {p.quantity} {Number(p.quantity) < 5 && '⚠️ (Faible)'}
                   </strong>
                 </div>
                 <div>
                   <span className="label">Prix :</span>{' '}
-                  <strong>{Number(p.price).toFixed(2)} {currency}</strong>
+                  <strong style={{ color: '#ffffff' }}>{Number(p.price).toFixed(2)} {currency}</strong>
                 </div>
               </div>
 
@@ -181,9 +181,9 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
               filteredProducts.map((p) => (
                 <tr key={p.id}>
                   <td style={{ fontWeight: 500 }}>{p.name}</td>
-                  <td><span className="badge">{p.category}</span></td>
+                  <td>{p.category ? <span className="badge">{p.category}</span> : '-'}</td>
                   <td>
-                    <span style={{ color: Number(p.quantity) < 5 ? '#f87171' : 'inherit', fontWeight: Number(p.quantity) < 5 ? 'bold' : 'normal' }}>
+                    <span>
                       {p.quantity} {Number(p.quantity) < 5 && '⚠️'}
                     </span>
                   </td>

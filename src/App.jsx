@@ -168,7 +168,7 @@ function App() {
         }}
       >
         <div style={{ color: '#f8fafc', fontWeight: '600' }}>
-          👋 Bonjour, <span style={{ color: '#38bdf8' }}>{displayUsername}</span>
+           Bonjour, <span style={{ color: '#ffffff' }}>{displayUsername}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
