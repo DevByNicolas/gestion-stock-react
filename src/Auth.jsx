@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import ProductList from './components/ProductList';
 import Auth from './Auth';
@@ -21,29 +21,9 @@ function App() {
     localStorage.setItem('app_currency', newCurrency);
   };
 
-  // Gérer la session d'authentification
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        getUserProfile(session.user);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        getUserProfile(session.user);
-      } else {
-        setUserName('');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Récupérer le pseudo du profil connecté en toute sécurité
-  const getUserProfile = async (user) => {
+  // Récupérer le pseudo
+  const getUserProfile = useCallback(async (user) => {
+    if (!user) return;
     try {
       if (user.user_metadata?.username) {
         setUserName(user.user_metadata.username);
@@ -62,19 +42,13 @@ function App() {
         setUserName('Utilisateur');
       }
     } catch (err) {
-      console.error('Erreur profil :', err);
       setUserName('Utilisateur');
     }
-  };
+  }, []);
 
-  // Charger les produits de l'utilisateur connecté
-  useEffect(() => {
-    if (session?.user) {
-      fetchProducts();
-    }
-  }, [session]);
-
-  const fetchProducts = async () => {
+  // Charger les produits
+  const fetchProducts = useCallback(async (userId) => {
+    if (!userId) return;
     try {
       const { data, error } = await supabase
         .from('products')
@@ -82,16 +56,39 @@ function App() {
         .order('id', { ascending: true });
 
       if (error) {
-        console.error('Erreur lors de la récupération des produits :', error);
+        console.error('Erreur récupération :', error);
         setProducts([]);
       } else {
         setProducts(data || []);
       }
     } catch (err) {
-      console.error('Erreur de chargement :', err);
       setProducts([]);
     }
-  };
+  }, []);
+
+  // Gérer la session d'authentification (exécuté UNE SEULE FOIS au montage)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        getUserProfile(session.user);
+        fetchProducts(session.user.id);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        getUserProfile(session.user);
+        fetchProducts(session.user.id);
+      } else {
+        setUserName('');
+        setProducts([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [getUserProfile, fetchProducts]);
 
   // Ajouter ou Modifier un produit
   const handleSubmit = async (e) => {
@@ -112,18 +109,18 @@ function App() {
         .update(productData)
         .eq('id', editId);
 
-      if (error) console.error('Erreur de modification :', error);
+      if (error) console.error('Erreur modification :', error);
       setEditId(null);
     } else {
       const { error } = await supabase
         .from('products')
         .insert([productData]);
 
-      if (error) console.error("Erreur d'ajout :", error);
+      if (error) console.error("Erreur ajout :", error);
     }
 
     setForm({ name: '', category: '', quantity: '', price: '' });
-    fetchProducts();
+    fetchProducts(session.user.id);
   };
 
   const handleEdit = (product) => {
@@ -132,15 +129,16 @@ function App() {
   };
 
   const handleDelete = async (id) => {
+    if (!session?.user) return;
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
 
     if (error) {
-      console.error('Erreur de suppression :', error);
+      console.error('Erreur suppression :', error);
     } else {
-      fetchProducts();
+      fetchProducts(session.user.id);
     }
   };
 
@@ -150,7 +148,6 @@ function App() {
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* En-tête avec Nom d'utilisateur + Devise + Déconnexion */}
       <div 
         style={{ 
           display: 'flex', 
