@@ -6,15 +6,16 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* Dégradé de fond sombre et doux inspiré de l'image */
-  background: radial-gradient(circle at 50% 30%, #5a626a 0%, #2b3036 60%, #1a1d21 100%);
+  /* Arrière-plan sombre et sobre */
+  background: radial-gradient(circle at 50% 30%, #334155 0%, #1e293b 60%, #0f172a 100%);
   color: #f8fafc;
   min-height: 100vh;
   padding: 40px 20px;
   position: relative;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Arrière-plan avec les vagues en filigrane */
+/* Vagues discrètes en filigrane */
 body::before {
   content: "";
   position: fixed;
@@ -22,8 +23,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  /* SVG dynamique générant des vagues ondulées en filigrane */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.08)' stroke-width='1'%3E%3Cpath d='M-100 450 Q 360 200 720 450 T 1540 450' /%3E%3Cpath d='M-100 470 Q 360 220 720 470 T 1540 470' /%3E%3Cpath d='M-100 430 Q 360 180 720 430 T 1540 430' /%3E%3Cpath d='M-100 490 Q 360 240 720 490 T 1540 490' /%3E%3Cpath d='M-100 410 Q 360 160 720 410 T 1540 410' /%3E%3Cpath d='M-100 510 Q 360 260 720 510 T 1540 510' /%3E%3Cpath d='M-100 390 Q 360 140 720 390 T 1540 390' /%3E%3C/g%3E%3Cg fill='none' stroke='rgba(0,0,0,0.25)' stroke-width='1.5'%3E%3Cpath d='M-100 300 Q 360 600 720 300 T 1540 300' /%3E%3Cpath d='M-100 320 Q 360 620 720 320 T 1540 320' /%3E%3Cpath d='M-100 280 Q 360 580 720 280 T 1540 280' /%3E%3Cpath d='M-100 340 Q 360 640 720 340 T 1540 340' /%3E%3Cpath d='M-100 260 Q 360 560 720 260 T 1540 260' /%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'%3E%3Cpath d='M-100 450 Q 360 200 720 450 T 1540 450' /%3E%3Cpath d='M-100 470 Q 360 220 720 470 T 1540 470' /%3E%3Cpath d='M-100 430 Q 360 180 720 430 T 1540 430' /%3E%3Cpath d='M-100 490 Q 360 240 720 490 T 1540 490' /%3E%3Cpath d='M-100 410 Q 360 160 720 410 T 1540 410' /%3E%3Cpath d='M-100 510 Q 360 260 720 510 T 1540 510' /%3E%3Cpath d='M-100 390 Q 360 140 720 390 T 1540 390' /%3E%3C/g%3E%3Cg fill='none' stroke='rgba(0,0,0,0.15)' stroke-width='1.5'%3E%3Cpath d='M-100 300 Q 360 600 720 300 T 1540 300' /%3E%3Cpath d='M-100 320 Q 360 620 720 320 T 1540 320' /%3E%3Cpath d='M-100 280 Q 360 580 720 280 T 1540 280' /%3E%3Cpath d='M-100 340 Q 360 640 720 340 T 1540 340' /%3E%3Cpath d='M-100 260 Q 360 560 720 260 T 1540 260' /%3E%3C/g%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
   pointer-events: none;
@@ -38,28 +38,27 @@ body::before {
 }
 
 .dashboard-header {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   text-align: center;
 }
 
 .dashboard-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
 }
 
-/* Cartes semi-transparentes style "Glassmorphism" pour laisser deviner les vagues */
+/* Cartes sobres avec verre semi-opaque */
 .card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .product-form {
@@ -70,75 +69,78 @@ body::before {
 
 .form-input {
   padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   font-size: 0.875rem;
   outline: none;
-  background-color: rgba(0, 0, 0, 0.25);
-  color: #ffffff;
+  background-color: rgba(15, 23, 42, 0.6);
+  color: #f8fafc;
   flex: 1;
   min-width: 0;
+  transition: border-color 0.15s ease;
 }
 
 .form-input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .form-input:focus {
-  border-color: #38bdf8;
-  background-color: rgba(0, 0, 0, 0.4);
+  border-color: #6366f1;
+  background-color: rgba(15, 23, 42, 0.8);
 }
 
 .btn {
   padding: 10px 18px;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   border-radius: 6px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
+/* Bouton principal : Indigo élégant au lieu du cyan IA */
 .btn-primary {
-  background-color: #38bdf8;
-  color: #0f172a;
+  background-color: #6366f1;
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background-color: #7dd3fc;
+  background-color: #4f46e5;
 }
 
 .btn-outline {
   background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
   margin-right: 6px;
 }
 
 .btn-outline:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.06);
   color: #ffffff;
 }
 
+/* Bouton suppression doux */
 .btn-danger {
-  background-color: transparent;
-  border: 1px solid #f87171;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   color: #f87171;
 }
 
 .btn-danger:hover {
-  background-color: rgba(239, 68, 68, 0.2);
+  background-color: rgba(239, 68, 68, 0.18);
 }
 
 .table-container {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .product-table {
@@ -149,16 +151,16 @@ body::before {
 }
 
 .product-table th {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(15, 23, 42, 0.5);
   padding: 14px 18px;
-  font-weight: 600;
-  color: #cbd5e1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 500;
+  color: #94a3b8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .product-table td {
   padding: 16px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: #f1f5f9;
 }
 
@@ -166,22 +168,22 @@ body::before {
   border-bottom: none;
 }
 
+/* Badge neutre et pro */
 .badge {
   display: inline-block;
-  padding: 3px 10px;
-  border-radius: 9999px;
+  padding: 3px 9px;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-  background-color: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* ==========================================================================
-   AJOUT : Styles Responsive pour la Vue Mobile (Cartes)
+   Styles Responsive Mobile
    ========================================================================== */
 
-/* Par défaut (Mobile) : Affichage des cartes, masquage du tableau */
 .mobile-cards-container {
   display: flex;
   flex-direction: column;
@@ -193,16 +195,16 @@ body::before {
 }
 
 .mobile-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(30, 41, 59, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-card-header {
@@ -213,7 +215,7 @@ body::before {
 
 .mobile-card-title {
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: #ffffff;
 }
 
@@ -222,8 +224,8 @@ body::before {
   justify-content: space-between;
   font-size: 0.875rem;
   color: #cbd5e1;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding: 10px 0;
 }
 
@@ -242,7 +244,6 @@ body::before {
   margin-right: 0;
 }
 
-/* Adaptation du formulaire sur petit écran */
 @media (max-width: 767px) {
   body {
     padding: 20px 12px;
@@ -253,7 +254,6 @@ body::before {
   }
 }
 
-/* Écrans Ordinateurs et Tablette (768px et plus) : Affichage du tableau */
 @media (min-width: 768px) {
   .mobile-cards-container {
     display: none;
