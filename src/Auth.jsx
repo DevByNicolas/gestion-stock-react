@@ -1,178 +1,207 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import ProductList from './components/ProductList';
+import Auth from './Auth';
 
-export default function Auth() {
-  const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+function App() {
+  const [session, setSession] = useState(null);
+  const [userName, setUserName] = useState('');
+  const [products, setProducts] = useState([]);
+  const [form, setForm] = useState({ name: '', category: '', quantity: '', price: '' });
+  const [editId, setEditId] = useState(null);
   
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [message, setMessage] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  // Devise sélectionnée (Euro par défaut, sauvegardée dans localStorage)
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('app_currency') || '€';
+  });
 
-  // Génère un email interne unique et prévisible basé exactement sur le pseudo
-  const formatInternalEmail = (name) => {
-    // Encode la chaîne pour éviter la perte de caractères spéciaux et éviter les collisions de pseudos
-    const cleanUsername = name.trim().toLowerCase().replace(/\s+/g, '_');
-    return `${cleanUsername}@app.internal.com`;
+  const handleCurrencyChange = (e) => {
+    const newCurrency = e.target.value;
+    setCurrency(newCurrency);
+    localStorage.setItem('app_currency', newCurrency);
   };
 
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    setErrorMsg('');
+  // Gérer la session d'authentification
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        getUserProfile(session.user);
+      }
+    });
 
-    const cleanUsername = username.trim();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        getUserProfile(session.user);
+      } else {
+        setUserName('');
+      }
+    });
 
-    if (!cleanUsername || !password) {
-      setErrorMsg("Veuillez remplir tous les champs.");
-      setLoading(false);
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Récupérer le pseudo du profil connecté
+  const getUserProfile = async (user) => {
+    // 1. Essayer depuis les métadonnées auth
+    if (user.user_metadata?.username) {
+      setUserName(user.user_metadata.username);
       return;
     }
 
-    const internalEmail = formatInternalEmail(cleanUsername);
+    // 2. Sinon, chercher dans la table profiles
+    const { data } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    if (isSignUp) {
-      // 1. Vérification stricte dans la table profiles
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('username')
-        .ilike('username', cleanUsername)
-        .maybeSingle();
-
-      if (existingUser) {
-        setErrorMsg("Ce nom d'utilisateur est déjà pris.");
-        setLoading(false);
-        return;
-      }
-
-      // 2. Tente l'inscription
-      const { data, error } = await supabase.auth.signUp({
-        email: internalEmail,
-        password: password,
-        options: {
-          data: { username: cleanUsername }
-        }
-      });
-
-      if (error) {
-        setErrorMsg("Erreur lors de l'inscription : " + error.message);
-      } else if (data?.user && data.user.identities && data.user.identities.length === 0) {
-        // Sécurité Supabase : Si l'email/pseudo existe déjà, Supabase renvoie identities = []
-        // On force la déconnexion pour éviter toute connexion indésirable
-        await supabase.auth.signOut();
-        setErrorMsg("Ce nom d'utilisateur est déjà utilisé.");
-      } else {
-        setMessage('Compte créé avec succès ! Connexion en cours...');
-      }
-
+    if (data?.username) {
+      setUserName(data.username);
     } else {
-      // Connexion
-      const { error } = await supabase.auth.signInWithPassword({
-        email: internalEmail,
-        password: password,
-      });
+      setUserName('Utilisateur');
+    }
+  };
 
-      if (error) {
-        setErrorMsg("Nom d'utilisateur ou mot de passe incorrect.");
-      }
+  // Charger uniquement les produits appartenant à l'utilisateur connecté
+  useEffect(() => {
+    if (session) {
+      fetchProducts();
+    }
+  }, [session]);
+
+  const fetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error('Erreur lors de la récupération :', error);
+    } else {
+      setProducts(data || []);
+    }
+  };
+
+  // Ajouter ou Modifier un produit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.price) return;
+
+    const productData = {
+      name: form.name,
+      category: form.category,
+      quantity: Number(form.quantity),
+      price: Number(form.price),
+      user_id: session.user.id
+    };
+
+    if (editId) {
+      const { error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', editId)
+        .eq('user_id', session.user.id);
+
+      if (error) console.error('Erreur de modification :', error);
+      setEditId(null);
+    } else {
+      const { error } = await supabase
+        .from('products')
+        .insert([productData]);
+
+      if (error) console.error("Erreur d'ajout :", error);
     }
 
-    setLoading(false);
+    setForm({ name: '', category: '', quantity: '', price: '' });
+    fetchProducts();
   };
 
-  const inputStyle = {
-    width: '100%',
-    boxSizing: 'border-box',
-    padding: '10px 14px',
-    borderRadius: '6px',
-    border: '1px solid #475569',
-    backgroundColor: '#1e293b',
-    color: '#fff',
-    fontSize: '0.95rem',
-    outline: 'none'
+  const handleEdit = (product) => {
+    setForm(product);
+    setEditId(product.id);
   };
+
+  const handleDelete = async (id) => {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', session.user.id);
+
+    if (error) {
+      console.error('Erreur de suppression :', error);
+    } else {
+      fetchProducts();
+    }
+  };
+
+  if (!session) {
+    return <Auth />;
+  }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '16px' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '400px', boxSizing: 'border-box' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#f8fafc' }}>
-          {isSignUp ? 'Créer un compte' : 'Connexion'}
-        </h2>
+    <div style={{ position: 'relative' }}>
+      {/* En-tête avec Nom d'utilisateur + Devise + Déconnexion */}
+      <div 
+        style={{ 
+          display: 'flex', 
+          justify: 'space-between', 
+          alignItems: 'center', 
+          padding: '12px 20px', 
+          maxWidth: '850px', 
+          margin: '0 auto',
+          gap: '10px',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div style={{ color: '#f8fafc', fontWeight: '600', fontSize: '1rem' }}>
+          👋 Bonjour, <span style={{ color: '#38bdf8' }}>{userName}</span>
+        </div>
 
-        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-          <div style={{ width: '100%' }}>
-            <label style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '6px', display: 'block' }}>
-              Nom d'utilisateur
-            </label>
-            <input
-              style={inputStyle}
-              type="text"
-              placeholder="Votre nom d'utilisateur"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-
-          <div style={{ width: '100%' }}>
-            <label style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '6px', display: 'block' }}>
-              Mot de passe
-            </label>
-            <input
-              style={inputStyle}
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setUsername ? setPassword(e.target.value) : null}
-              required
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={loading} 
-            style={{ width: '100%', marginTop: '8px', padding: '12px' }}
-          >
-            {loading ? 'Chargement...' : isSignUp ? "S'inscrire" : 'Se connecter'}
-          </button>
-        </form>
-
-        {message && <p style={{ marginTop: '14px', color: '#4ade80', fontSize: '0.875rem', textAlign: 'center' }}>{message}</p>}
-        {errorMsg && <p style={{ marginTop: '14px', color: '#f87171', fontSize: '0.875rem', textAlign: 'center' }}>{errorMsg}</p>}
-
-        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.875rem', color: '#94a3b8' }}>
-          <p style={{ margin: 0 }}>
-            {isSignUp ? 'Déjà un compte ?' : "Pas encore de compte ?"} {' '}
-            <button
-              type="button"
-              onClick={() => { 
-                setIsSignUp(!isSignUp); 
-                setErrorMsg(''); 
-                setMessage(''); 
-              }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Devise :</label>
+            <select
+              value={currency}
+              onChange={handleCurrencyChange}
               style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: '#38bdf8',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontWeight: '500',
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                touchAction: 'manipulation'
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid #475569',
+                backgroundColor: '#1e293b',
+                color: '#fff',
+                fontSize: '0.875rem',
+                outline: 'none',
+                cursor: 'pointer'
               }}
             >
-              {isSignUp ? 'Se connecter' : "S'inscrire"}
-            </button>
-          </p>
+              <option value="€">EUR (€)</option>
+              <option value="$">USD ($)</option>
+              <option value="FCFA">FCFA</option>
+            </select>
+          </div>
+
+          <button onClick={() => supabase.auth.signOut()} className="btn btn-outline">
+            Déconnexion
+          </button>
         </div>
       </div>
+
+      <ProductList
+        products={products}
+        form={form}
+        setForm={setForm}
+        editId={editId}
+        handleSubmit={handleSubmit}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+        currency={currency}
+      />
     </div>
   );
 }
+
+export default App;
