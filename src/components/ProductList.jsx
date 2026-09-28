@@ -220,10 +220,10 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <button onClick={exportToCSV} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              📄 Exporter CSV
+              📄 Exporter en CSV
             </button>
             <button onClick={exportToPDF} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              picture_as_pdf Exporter PDF
+             Exporter en PDF
             </button>
           </div>
         </div>
