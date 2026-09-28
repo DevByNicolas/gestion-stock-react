@@ -1,10 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import '../App.css';
 
 function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit, handleDelete, currency = '€' }) {
   // États locaux pour la recherche et le filtre
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+
+  // Référence pour cibler l'input du nom lors de l'édition
+  const nameInputRef = useRef(null);
 
   // 1. Liste dynamique de toutes les catégories existantes (sans doublons)
   const categories = useMemo(() => {
@@ -34,13 +39,95 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
     return filteredProducts.filter((p) => Number(p.quantity) < 5).length;
   }, [filteredProducts]);
 
+  // Gestion de la modification avec focus
+  const onEditClick = (product) => {
+    handleEdit(product);
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  };
+
+  // Confirmation avant suppression
+  const onDeleteClick = (id, name) => {
+    if (window.confirm(`Voulez-vous vraiment supprimer "${name}" ?`)) {
+      handleDelete(id);
+    }
+  };
+
+  // --- FONCTION EXPORT CSV ---
+  const exportToCSV = () => {
+    if (filteredProducts.length === 0) {
+      alert("Aucune donnée à exporter.");
+      return;
+    }
+
+    const headers = ["Nom", "Categorie", "Quantite", `Prix_Unitaire_${currency}`];
+    const rows = filteredProducts.map((p) => [
+      `"${p.name.replace(/"/g, '""')}"`,
+      `"${(p.category || '').replace(/"/g, '""')}"`,
+      p.quantity,
+      p.price
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+      + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `inventaire_stock_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- FONCTION EXPORT PDF ---
+  const exportToPDF = () => {
+    if (filteredProducts.length === 0) {
+      alert("Aucune donnée à exporter.");
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    // En-tête du document PDF
+    doc.setFontSize(18);
+    doc.text("Rapport d'Inventaire du Stock", 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Généré le : ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 14, 28);
+    doc.text(`Total produits : ${totalItems} | Valeur totale : ${totalValue.toFixed(2)} ${currency}`, 14, 34);
+
+    // Tableau des produits
+    const tableColumn = ["Nom du produit", "Catégorie", "Quantité", `Prix (${currency})`, `Total (${currency})` ];
+    const tableRows = filteredProducts.map((p) => [
+      p.name,
+      p.category || '-',
+      p.quantity,
+      `${Number(p.price).toFixed(2)} ${currency}`,
+      `${(Number(p.price) * Number(p.quantity)).toFixed(2)} ${currency}`
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'striped',
+      headStyles: { fillColor: [30, 41, 59] },
+      styles: { fontSize: 9 }
+    });
+
+    doc.save(`inventaire_stock_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Gestion de Stock</h1>
       </div>
 
-      {/* BLOC 1 : Statistiques / Résumé (Textes et valeurs en Blanc Pur) */}
+      {/* BLOC 1 : Statistiques / Résumé */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
         <div className="card" style={{ textAlign: 'center', padding: '16px' }}>
           <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Valeur du Stock</span>
@@ -66,6 +153,7 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
       <div className="card">
         <form onSubmit={handleSubmit} className="product-form">
           <input
+            ref={nameInputRef}
             className="form-input"
             type="text"
             placeholder="Nom du produit"
@@ -99,29 +187,46 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
         </form>
       </div>
 
-      {/* BLOC 2 : Barre de Recherche et Filtre */}
-      <div className="card" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <input
-          className="form-input"
-          style={{ flex: 2, minWidth: '200px' }}
-          type="text"
-          placeholder="🔍 Rechercher un produit par nom..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="form-input"
-          style={{ flex: 1, minWidth: '150px' }}
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="">Toutes les catégories</option>
-          {categories.map((cat, idx) => (
-            <option key={idx} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
+      {/* BLOC 2 : Barre de Recherche, Filtre et Boutons d'Exportation */}
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <input
+            className="form-input"
+            style={{ flex: 2, minWidth: '200px' }}
+            type="text"
+            placeholder="🔍 Rechercher un produit par nom..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <select
+            className="form-input"
+            style={{ flex: 1, minWidth: '150px' }}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="">Toutes les catégories</option>
+            {categories.map((cat, idx) => (
+              <option key={idx} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* BOUTONS D'EXPORTATION DISCRETS */}
+        <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', paddingTop: '4px' }}>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+            {filteredProducts.length} produit(s) affiché(s)
+          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <button onClick={exportToCSV} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+              📄 Exporter CSV
+            </button>
+            <button onClick={exportToPDF} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+              picture_as_pdf Exporter PDF
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* VUE MOBILE : Cartes */}
@@ -150,8 +255,8 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
               </div>
 
               <div className="mobile-card-actions">
-                <button onClick={() => handleEdit(p)} className="btn btn-outline">Modifier</button>
-                <button onClick={() => handleDelete(p.id)} className="btn btn-danger">Supprimer</button>
+                <button onClick={() => onEditClick(p)} className="btn btn-outline">Modifier</button>
+                <button onClick={() => onDeleteClick(p.id, p.name)} className="btn btn-danger">Supprimer</button>
               </div>
             </div>
           ))
@@ -189,8 +294,8 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
                   </td>
                   <td>{Number(p.price).toFixed(2)} {currency}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button onClick={() => handleEdit(p)} className="btn btn-outline">Modifier</button>
-                    <button onClick={() => handleDelete(p.id)} className="btn btn-danger">Supprimer</button>
+                    <button onClick={() => onEditClick(p)} className="btn btn-outline">Modifier</button>
+                    <button onClick={() => onDeleteClick(p.id, p.name)} className="btn btn-danger">Supprimer</button>
                   </td>
                 </tr>
               ))
