@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import ProductList from './components/ProductList';
 import Auth from './Auth';
-import SplashScreen from './SplashScreen'; // Si le fichier est dans 'src/components/', utilise './components/SplashScreen'
+import SplashScreen from './components/SplashScreen';// Si le fichier est dans 'src/components/', utilise './components/SplashScreen'
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
