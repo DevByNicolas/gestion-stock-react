@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import ProductList from './components/ProductList';
 import Auth from './Auth';
+import SplashScreen from './SplashScreen'; // Si le fichier est dans 'src/components/', utilise './components/SplashScreen'
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
@@ -135,7 +137,12 @@ function App() {
     }
   };
 
-  // Écran d'attente bref pendant la lecture du token local
+  // 1. Écran d'animation au tout premier chargement de l'application
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
+  // 2. Écran d'attente bref pendant la lecture du token local
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', color: '#f8fafc' }}>
@@ -144,7 +151,7 @@ function App() {
     );
   }
 
-  // Si l'utilisateur n'est pas connecté
+  // 3. Si l'utilisateur n'est pas connecté
   if (!session) {
     return <Auth />;
   }
