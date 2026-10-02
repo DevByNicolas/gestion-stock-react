@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import '../App.css';
 
-function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit, handleDelete, currency = '€' }) {
+function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit, handleDelete, currency = '€', hideForm = false }) {
   // États locaux pour la recherche et le filtre
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -149,43 +149,45 @@ function ProductList({ products, form, setForm, editId, handleSubmit, handleEdit
         </div>
       </div>
 
-      {/* FORMULAIRE D'AJOUT / MODIFICATION */}
-      <div className="card">
-        <form onSubmit={handleSubmit} className="product-form">
-          <input
-            ref={nameInputRef}
-            className="form-input"
-            type="text"
-            placeholder="Nom du produit"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <input
-            className="form-input"
-            type="text"
-            placeholder="Catégorie"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-          />
-          <input
-            className="form-input"
-            type="number"
-            placeholder="Qté"
-            value={form.quantity}
-            onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-          />
-          <input
-            className="form-input"
-            type="number"
-            placeholder={`Prix (${currency})`}
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-          />
-          <button type="submit" className="btn btn-primary">
-            {editId ? 'Enregistrer' : 'Ajouter'}
-          </button>
-        </form>
-      </div>
+      {/* FORMULAIRE D'AJOUT / MODIFICATION (Masqué si hideForm est true) */}
+      {!hideForm && (
+        <div className="card">
+          <form onSubmit={handleSubmit} className="product-form">
+            <input
+              ref={nameInputRef}
+              className="form-input"
+              type="text"
+              placeholder="Nom du produit"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Catégorie"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
+            <input
+              className="form-input"
+              type="number"
+              placeholder="Qté"
+              value={form.quantity}
+              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+            />
+            <input
+              className="form-input"
+              type="number"
+              placeholder={`Prix (${currency})`}
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+            />
+            <button type="submit" className="btn btn-primary">
+              {editId ? 'Enregistrer' : 'Ajouter'}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* BLOC 2 : Barre de Recherche, Filtre et Boutons d'Exportation */}
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
